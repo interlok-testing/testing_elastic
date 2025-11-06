@@ -1,0 +1,45 @@
+plugins {
+    // https://github.com/nemerosa/versioning
+    id 'net.nemerosa.versioning' version '3.1.0'
+}
+
+ext {
+    testingCommonGradle = "https://raw.githubusercontent.com/interlok-testing/testing_common/refs/heads/master/common.gradle?timestamp=${new Date().getTime()}"
+//  testingCommonGradle = "../testing_common/common.gradle"
+    includeWar='true'
+    restAssuredVersion = "5.5.0"
+}
+
+configurations.all {
+    resolutionStrategy {
+        cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+allprojects {
+    apply from: "${testingCommonGradle}"
+    // specify the version of the configuration.
+    version=versioning.info.full
+}
+
+
+dependencies {
+    testImplementation ("com.adaptris:interlok-elastic-common:$interlokVersion") { changing=true }
+    interlokRuntime ("com.adaptris:interlok-elastic-common:$interlokVersion") { changing=true }
+    testImplementation ("com.adaptris:interlok-elastic-rest:$interlokVersion") { changing=true }
+    interlokRuntime ("com.adaptris:interlok-elastic-rest:$interlokVersion") { changing=true }
+    testImplementation ("com.adaptris:interlok-elastic-sdk:$interlokVersion") { changing=true }
+    interlokRuntime ("com.adaptris:interlok-elastic-sdk:$interlokVersion") { changing=true }
+    testImplementation "io.rest-assured:rest-assured:$restAssuredVersion"
+    testImplementation "io.rest-assured:json-path:$restAssuredVersion"
+
+    testImplementation ("com.adaptris:interlok-elastic-sdk:$interlokVersion") { changing=true }
+    interlokJavadocs group: "com.adaptris", name: "interlok-elastic-common", version: "$interlokVersion", classifier: "javadoc", changing: true, transitive: false
+    interlokJavadocs group: "com.adaptris", name: "interlok-elastic-rest", version: "$interlokVersion", classifier: "javadoc", changing: true, transitive: false
+    interlokJavadocs group: "com.adaptris", name: "interlok-elastic-sdk", version: "$interlokVersion", classifier: "javadoc", changing: true, transitive: false
+
+}
+
+tasks.named('functionalTest', Test) {
+    workingDir = "$projectDir"
+}

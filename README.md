@@ -1,4 +1,4 @@
-# JRuby Testing
+# Elasticsearch Testing
 
 
 [![GitHub tag](https://img.shields.io/github/tag/interlok-testing/testing_elastic.svg)](https://github.com/interlok-testing/testing_elastic/tags)

@@ -1,0 +1,40 @@
+repoUsername=MyUserName
+repoPassword=MyPassword
+
+#componentName=interlok-service-example
+#componentDescription=A description of this component
+
+#
+# NOTE: The below commented out properties are all related to integrating this component with the Interlok UI
+# https://interlok.adaptris.net/interlok-docs/#/pages/ui/ui-optional-component-discovery
+#
+
+# This is the Interlok version that this component was developed for
+#componentTargetInterlokVersion=3.11.1+
+
+# Component Tags are primarily used in the search features of the UI and the value should be a comma separated string
+#componentInterlokTags=example,transform,jdbc
+
+# Whether or not your custom component requires a license (true|false)
+#componentRequiresLicense=false
+
+# URL to where the main documentation for the component is
+#componentMainDocumentation=https://interlok.adaptris.net/interlok-docs/#/
+
+# URL to supplementary documentation that you think would be useful for the end user
+#componentSupplementaryDocumentation=https://www.adaptris.com/interlok/
+
+# URL to this projects README.md
+#componentReadMe=https://github.com/adaptris/interlok-service-example/raw/develop/README.md
+
+# URL of where the user can checkout the source code for the component
+#componentRepositoryLocation=https://github.com/adaptris/interlok-service-example
+
+# Some additonal notes that might be important for the user to know before downloading/using
+#componentNotes=Requires additional jars not automatically delivered
+
+# Text to inform the user that the component is deprecated
+#componentDeprecatedText=This component has been deprecated from 3.9.0 and you should use interlok-new-thing instead
+
+# Inform the user that this component is a stub or development only component, used for writing custom code against (true|false)
+#componentDeveloperOnly=false

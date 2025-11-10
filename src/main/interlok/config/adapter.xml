@@ -1,0 +1,300 @@
+<adapter>
+  <unique-id>elastic-testing</unique-id>
+  <start-up-event-imp>com.adaptris.core.event.StandardAdapterStartUpEvent</start-up-event-imp>
+  <heartbeat-event-imp>com.adaptris.core.HeartbeatEvent</heartbeat-event-imp>
+  <shared-components>
+    <connections>
+        <jetty-http-connection>
+            <unique-id>jetty-conn</unique-id>
+            <port>8081</port>
+            <server-connector-properties/>
+            <http-configuration/>
+        </jetty-http-connection>
+      <elastic-rest-connection>
+        <unique-id>elastic-conn</unique-id>
+        <transport-url>${elastic.url1}</transport-url>
+      </elastic-rest-connection>
+      <elastic-sdk-connection>
+        <unique-id>elastic-sdk-conn</unique-id>
+          <transport-url>${elastic.url1}</transport-url>
+      </elastic-sdk-connection>
+    </connections>
+    <services/>
+  </shared-components>
+  <event-handler class="default-event-handler">
+    <unique-id>DefaultEventHandler</unique-id>
+    <connection class="null-connection">
+      <unique-id>agitated-einstein</unique-id>
+    </connection>
+    <producer class="null-message-producer">
+      <unique-id>romantic-bartik</unique-id>
+    </producer>
+  </event-handler>
+  <message-error-handler class="null-processing-exception-handler">
+    <unique-id>silly-dijkstra</unique-id>
+  </message-error-handler>
+  <failed-message-retrier class="no-retries">
+    <unique-id>jolly-ptolemy</unique-id>
+  </failed-message-retrier>
+  <channel-list>
+    <channel>
+      <consume-connection class="shared-connection">
+        <lookup-name>jetty-conn</lookup-name>
+      </consume-connection>
+<!--      <produce-connection class="shared-connection">-->
+<!--          <lookup-name>elastic-conn</lookup-name>-->
+<!--      </produce-connection>-->
+      <workflow-list>
+        <standard-workflow>
+            <consumer class="jetty-message-consumer">
+                <unique-id>jetty-consumer-1</unique-id>
+                <path>${api.path}/*</path>
+                <parameter-handler class="jetty-http-parameters-as-metadata"/>
+                <header-handler class="jetty-http-ignore-headers"/>
+                <message-factory class="default-message-factory">
+                    <default-char-encoding>UTF-8</default-char-encoding>
+                </message-factory>
+            </consumer>
+          <service-collection class="service-list">
+            <unique-id>eager-albattani</unique-id>
+            <services>
+                <branching-service-collection>
+                    <unique-id>HTTP Router</unique-id>
+                    <services>
+                        <jetty-routing-service>
+                            <unique-id>Route</unique-id>
+                            <route>
+                                <service-id>JSON Producer</service-id>
+                                <condition>
+                                    <url-pattern>^${simple.api.path}/json*</url-pattern>
+                                    <method>GET</method>
+                                </condition>
+                            </route>
+                            <route>
+                                <service-id>CSV Producer</service-id>
+                                <condition>
+                                    <url-pattern>^${simple.api.path}/csv*</url-pattern>
+                                    <method>GET</method>
+                                </condition>
+                            </route>
+                            <route>
+                                <service-id>CSV Producer Geo</service-id>
+                                <condition>
+                                    <url-pattern>^${simple.api.path}/csv-geo*</url-pattern>
+                                    <method>GET</method>
+                                </condition>
+                            </route>
+                            <route>
+                                <service-id>CSV Bulk Operation</service-id>
+                                <condition>
+                                    <url-pattern>^${simple.api.path}/csv-bulk*</url-pattern>
+                                    <method>GET</method>
+                                </condition>
+                            </route>
+                            <route>
+                                <service-id>SDK Delete Operation</service-id>
+                                <condition>
+                                    <url-pattern>^${sdk.api.path}*</url-pattern>
+                                    <method>DELETE</method>
+                                </condition>
+                            </route>
+                            <route>
+                                <service-id>SDK Update Operation</service-id>
+                                <condition>
+                                    <url-pattern>^${sdk.api.path}*</url-pattern>
+                                    <method>PUT</method>
+                                </condition>
+                            </route>
+                            <default-service-id>NotHandled</default-service-id>
+                        </jetty-routing-service>
+                        <service-list>
+                            <unique-id>SDK Delete Operation</unique-id>
+                            <services>
+                                <service class="message-unique-id-service">
+                                    <message-unique-id>%message{id}</message-unique-id>
+                                </service>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-sdk-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-sdk-single-operation">
+                                        <unique-id>elastic-sdk-operation</unique-id>
+                                        <index>%message{index}</index>
+                                        <document-builder class="elastic-simple-document-builder"/>
+                                        <action class="elastic-configured-action">
+                                            <action>DELETE</action>
+                                        </action>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>SDK Update Operation</unique-id>
+                            <services>
+                                <service class="message-unique-id-service">
+                                    <message-unique-id>%message{id}</message-unique-id>
+                                </service>
+                                <payload-from-template>
+                                    <unique-id>Convert to JSON</unique-id>
+                                    <metadata-tokens/>
+                                    <template>{"Message" : "%message{message}"}</template>
+                                </payload-from-template>
+                                <log-message-service>
+                                    <unique-id>log-message</unique-id>
+                                    <log-level>DEBUG</log-level>
+                                    <log-prefix>#######################################################</log-prefix>
+                                </log-message-service>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-sdk-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-sdk-single-operation">
+                                        <unique-id>elastic-sdk-operation</unique-id>
+                                        <index>%message{index}</index>
+                                        <document-builder class="elastic-json-document-builder"/>
+                                        <action class="elastic-configured-action">
+                                            <action>UPDATE</action>
+                                        </action>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>CSV Bulk Operation</unique-id>
+                            <services>
+                                <payload-from-template>
+                                    <unique-id>Convert to Bulk CSV</unique-id>
+                                    <metadata-tokens/>
+                                    <template>productuniqueid,productname,crop,productcategory,applicationweek,operationdate,manufacturer,applicationrate,measureunit,growthstagecode,iscanonical,latitude,longitude,recordid,id
+UID-1,*A Simazine,,Insecticides,48,20051122,,1.5,Litres per Hectare,,0,,,5,1
+UID-2,*Axial,,Herbicides,15,20100408,,0.25,Litres per Hectare,,0,,,6,6
+UID-3,*Betanal Maxxim,,Herbicides,18,20130501,,0.07,Litres per Hectare,,0,,,21,21
+UID-4,24-D Amine,Passion Fruit,Herbicides,19,20080506,,2.8,Litres per Hectare,,0,53.37969768091292,-0.18346963126415416,210,209
+UID-5,26N35S,Rape Winter,Fungicides,12,20150314,,200,Kilograms per Hectare,,0,52.71896363632868,-1.2391368098336788,233,217</template>
+                                </payload-from-template>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-rest-bulk-operation">
+                                        <unique-id>elastic-rest-bulk-operation-producer-csv</unique-id>
+                                        <document-builder class="elastic-csv-document-builder">
+                                            <preference class="csv-basic-preference-builder">
+                                                <style>STANDARD_PREFERENCE</style>
+                                            </preference>
+                                        </document-builder>
+                                        <index>${simple.elastic.index}-csv</index>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>JSON Producer</unique-id>
+                            <services>
+                                <payload-from-template>
+                                    <unique-id>Convert to JSON</unique-id>
+                                    <metadata-tokens/>
+                                    <template>{"Message" : "%message{message}"}</template>
+                                </payload-from-template>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-rest-single-operation">
+                                        <unique-id>elastic-rest-single-operation-producer-json</unique-id>
+                                        <document-builder class="elastic-json-document-builder"/>
+                                        <index>${simple.elastic.index}-json</index>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>CSV Producer Geo</unique-id>
+                            <services>
+                                <payload-from-template>
+                                    <unique-id>Convert to CSV</unique-id>
+                                    <metadata-tokens/>
+                                    <template>ID,Latitude,Longitude
+csvgeo-1,%message{lat},%message{lon}</template>
+                                </payload-from-template>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-rest-single-operation">
+                                        <unique-id>elastic-rest-single-operation-producer-csv</unique-id>
+                                        <document-builder class="elastic-csv-geopoint-document-builder">
+                                            <location-field-name>geopoint</location-field-name>
+                                            <preference class="csv-basic-preference-builder">
+                                                <style>STANDARD_PREFERENCE</style>
+                                            </preference>
+                                        </document-builder>
+                                        <index>${simple.elastic.index}-csv-geo</index>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>CSV Producer</unique-id>
+                            <services>
+                                <payload-from-template>
+                                    <unique-id>Convert to CSV</unique-id>
+                                    <metadata-tokens/>
+                                    <template>ID,Message
+1,%message{message}</template>
+                                </payload-from-template>
+                                <standalone-requestor>
+                                    <unique-id>standard-http</unique-id>
+                                    <connection class="shared-connection">
+                                        <lookup-name>elastic-conn</lookup-name>
+                                    </connection>
+                                    <producer class="elastic-rest-single-operation">
+                                        <unique-id>elastic-rest-single-operation-producer-csv</unique-id>
+                                        <document-builder class="elastic-csv-document-builder">
+                                            <preference class="csv-basic-preference-builder">
+                                                <style>STANDARD_PREFERENCE</style>
+                                            </preference>
+                                        </document-builder>
+                                        <index>${simple.elastic.index}-csv</index>
+                                    </producer>
+                                </standalone-requestor>
+                            </services>
+                        </service-list>
+                        <service-list>
+                            <unique-id>NotHandled</unique-id>
+                            <services>
+                                <add-metadata-service>
+                                    <unique-id>Add 400 Response Code</unique-id>
+                                    <metadata-element>
+                                        <key>ResponseCode</key>
+                                        <value>400</value>
+                                    </metadata-element>
+                                </add-metadata-service>
+                                <payload-from-template>
+                                    <unique-id>Add Not Handled Status Message</unique-id>
+                                    <metadata-tokens/>
+                                    <template>{"Status" : "Not Handled; please check"}</template>
+                                </payload-from-template>
+                            </services>
+                        </service-list>
+                    </services>
+                    <first-service-id>Route</first-service-id>
+                </branching-service-collection>
+            </services>
+          </service-collection>
+          <unique-id>elastic-workflows</unique-id>
+        </standard-workflow>
+      </workflow-list>
+      <unique-id>elastic-channel</unique-id>
+    </channel>
+  </channel-list>
+  <message-error-digester class="standard-message-error-digester">
+    <unique-id>ErrorDigest</unique-id>
+    <digest-max-size>100</digest-max-size>
+  </message-error-digester>
+</adapter>
